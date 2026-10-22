@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Letter From My Heart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0a0d;
+      --card-bg: rgba(26, 18, 22, 0.7);
+      --card-border: rgba(230, 180, 195, 0.2);
+      --accent-gold: #e2b97f;
+      --accent-rose: #f4a5b8;
+      --text-main: #f8eef1;
+      --text-muted: #c9adb6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 10%, #24141e 0%, #0d0a0d 100%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    canvas#particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    /* Intro Envelope Overlay */
+    #envelope-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #26121f 0%, #0c080b 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), visibility 1s;
+    }
+    #envelope-screen.opened {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .envelope-box {
+      width: 280px;
+      height: 200px;
+      background: #1a0f16;
+      border: 1px solid rgba(244, 165, 184, 0.3);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8), inset 0 0 40px rgba(244, 165, 184, 0.05);
+      position: relative;
+      cursor: pointer;
+      transform: translateY(0);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .envelope-box:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 30px 70px rgba(244, 165, 184, 0.15);
+    }
+    .wax-seal {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #91273e 0%, #540e1f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: #f7d2dc;
+      border: 2px dashed rgba(255,255,255,0.2);
+      animation: pulse 2.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    /* Main Card Layout */
+    .hero-header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+    .tagline {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 7vw, 44px);
+      font-weight: 400;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #ffffff 40%, #f4a5b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+    .letter-body {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      line-height: 1.8;
+      color: #ede2e6;
+    }
+    .letter-body p {
+      margin-bottom: 18px;
+    }
+    .letter-body p:last-child {
+      margin-bottom: 0;
+    }
+    .editable:focus {
+      outline: 1px dashed var(--accent-rose);
+      background: rgba(244, 165, 184, 0.08);
+      border-radius: 4px;
+    }
+    /* Flip Cards */
+    .memories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 15px;
+    }
+    .flip-card {
+      background: transparent;
+      perspective: 1000px;
+      height: 140px;
+      cursor: pointer;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-style: preserve-3d;
+      border-radius: 14px;
+    }
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-front, .flip-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border: 1px solid var(--card-border);
+    }
+    .flip-front {
+      background: rgba(45, 25, 35, 0.6);
+    }
+    .flip-back {
+      background: rgba(145, 39, 62, 0.4);
+      transform: rotateY(180deg);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    /* Response Gauge */
+    .responses {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .resp-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(244, 165, 184, 0.25);
+      color: var(--text-main);
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    .resp-btn:hover {
+      background: rgba(244, 165, 184, 0.15);
+      border-color: var(--accent-rose);
+      transform: translateX(4px);
+    }
+    .admin-bar {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 99;
+      display: flex;
+      gap: 8px;
+    }
+    .tool-btn {
+      background: #1e121a;
+      border: 1px solid rgba(244, 165, 184, 0.4);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+
+  <!-- Wax Envelope Entry -->
+  <div id="envelope-screen">
+    <div class="envelope-box" onclick="openEnvelope()">
+      <div class="wax-seal">M</div>
+      <p style="margin-top: 18px; font-size: 13px; letter-spacing: 2px; color: #d4a5b4;">A NOTE FOR YOU</p>
+      <span style="font-size: 11px; opacity: 0.6; margin-top: 4px;">Tap to unlock</span>
+    </div>
+  </div>
+
+  <div class="wrapper">
+    <header class="hero-header">
+      <div class="tagline">From Someone Who Truly Cares</div>
+      <h1 class="editable" contenteditable="false" id="heading">I Was Wrong, & I Am Truly Sorry</h1>
+    </header>
+
+    <!-- Main Message -->
+    <div class="card">
+      <div class="letter-body">
+        <p class="editable" contenteditable="false" id="p1">
+          I am writing this because what I said yesterday was unfair, harsh, and completely uncalled for. You did not deserve that tone, and you definitely didn't deserve to be hurt by someone who is supposed to have your back.
+        </p>
+        <p class="editable" contenteditable="false" id="p2">
+          Your presence and peace mean more to me than winning any stupid argument or venting a bad mood. I took your patience for granted, and I hate knowing I caused you pain.
+        </p>
+        <p class="editable" contenteditable="false" id="p3">
+          Take all the time and space you need. I'm not rushing you. I just wanted you to know that I see where I failed, I apologize without excuses, and our friendship is irreplaceable to me.
+        </p>
+      </div>
+    </div>
+
+    <!-- Interactive Memories / Reasons -->
+    <div class="card">
+      <h3 style="font-family:'Cinzel', serif; font-size:14px; letter-spacing:2px; color:var(--accent-gold); margin-bottom:12px;">TAP TO REVEAL</h3>
+      <div class="memories-grid">
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front">
+              <span style="font-size:24px; margin-bottom:6px;">🤍</span>
+              <strong>What You Deserve</strong>
+            </div>
+            <div class="flip-back">Only kindness, respect, and unconditional support. Never harsh words.</div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="this.classList.toggle('flipped')">
+          <div class="flip-card-inner">
+            <div class="flip-front">
+              <span style="font-size:24px; margin-bottom:6px;">✨</span>
+              <strong>My Promise</strong>
+            </div>
+            <div class="flip-back">To listen before reacting, and to always protect your feelings first.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reaction & WhatsApp Responder -->
+    <div class="card">
+      <h3 style="font-family:'Cinzel', serif; font-size:14px; letter-spacing:2px; color:var(--accent-gold); margin-bottom:12px;">HOW ARE YOU FEELING?</h3>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">No pressure at all. Pick whatever is genuine right now:</p>
+      <div class="responses">
+        <button class="resp-btn" onclick="sendReply('I saw your note. I still need some time, but thank you for understanding.')">
+          <span>🌿 Still need space right now</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="resp-btn" onclick="sendReply('I am still mad, but you owe me favorite treats and a real apology.')">
+          <span>🍕 You owe me treats first</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="resp-btn" onclick="sendReply('I read what you wrote. Call me whenever you are free.')">
+          <span>🤍 Call me, let’s talk</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Live Editor Floating Bar -->
+  <div class="admin-bar">
+    <button class="tool-btn" id="editBtn" onclick="toggleEdit()">✏️ Edit Text</button>
+    <button class="tool-btn" onclick="copyShareLink()">🔗 Copy Link</button>
+  </div>
+
+  <script>
+    // Particle Dust System
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let pts = [];
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < 40; i++) {
+      pts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.5,
+        dy: -(Math.random() * 0.4 + 0.2),
+        alpha: Math.random() * 0.6 + 0.2
+      });
+    }
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#f4a5b8';
+      pts.forEach(p => {
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        p.y += p.dy;
+        if (p.y < 0) p.y = canvas.height;
+      });
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // Envelope Reveal
+    function openEnvelope() {
+      document.getElementById('envelope-screen').classList.add('opened');
+    }
+
+    // Direct WhatsApp Reply Generator
+    function sendReply(msg) {
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    // Live Inline Text Editing & Persistence
+    let isEditing = false;
+    function toggleEdit() {
+      isEditing = !isEditing;
+      const editables = document.querySelectorAll('.editable');
+      editables.forEach(el => {
+        el.contentEditable = isEditing;
+      });
+      document.getElementById('editBtn').innerText = isEditing ? '💾 Save Changes' : '✏️ Edit Text';
+      if (!isEditing) {
+        localStorage.setItem('saved_apology_heading', document.getElementById('heading').innerText);
+        localStorage.setItem('saved_apology_p1', document.getElementById('p1').innerText);
+        localStorage.setItem('saved_apology_p2', document.getElementById('p2').innerText);
+        localStorage.setItem('saved_apology_p3', document.getElementById('p3').innerText);
+      }
+    }
+
+    // Load saved edits
+    window.addEventListener('DOMContentLoaded', () => {
+      ['heading', 'p1', 'p2', 'p3'].forEach(id => {
+        const val = localStorage.getItem('saved_apology_' + id);
+        if (val) document.getElementById(id).innerText = val;
+      });
+    });
+
+    function copyShareLink() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard! You can now send it directly to her.');
+    }
+  </script>
+</body>
+</html>
